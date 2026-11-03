@@ -1,121 +1,142 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
+import Editor from './components/Editor'
+import FindReplacePanel from './components/FindReplacePanel'
+import NewFileDialog from './components/NewFileDialog'
+import StatusBar from './components/StatusBar'
+import TabBar from './components/TabBar'
+import Toolbar from './components/Toolbar'
+import { languageOf, type EditorFile } from './types'
 import './App.css'
 
+// UI 확인용 샘플 파일
+const sampleFiles: EditorFile[] = [
+  {
+    id: '1',
+    name: 'Main',
+    extension: 'c',
+    content: '#include <stdio.h>\n\n/* 프로그램 시작 */\nint main(void) {\n    printf("Hello, World!\\n");\n    return 0;\n}\n',
+    isDirty: false,
+  },
+  {
+    id: '2',
+    name: 'file1',
+    extension: 'c',
+    content: '// file1.c\nint add(int a, int b) {\n    return a + b;\n}\n',
+    isDirty: false,
+  },
+]
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [files, setFiles] = useState<EditorFile[]>(sampleFiles)
+  const [activeId, setActiveId] = useState<string | null>(sampleFiles[0].id)
+  const [showNewFile, setShowNewFile] = useState(false)
+  const [showFind, setShowFind] = useState(false)
+  const [cursor, setCursor] = useState({ line: 1, column: 1 })
+
+  const activeFile = files.find((f) => f.id === activeId) ?? null
+
+  // TODO: 저장 로직 구현 (저장 버튼 / Ctrl+S / 15초 자동 저장에서 공통 사용)
+  const handleSave = () => {}
+
+  // TODO: 파일 탐색기 열고 파일 내용 + 확장자 읽기
+  const handleOpen = () => {}
+
+  // TODO: 프로그램 종료
+  const handleExit = () => {}
+
+  // TODO: 단어 검색
+  const handleFind = (_query: string) => {}
+
+  // TODO: 단어 전부 바꾸기
+  const handleReplaceAll = (_query: string, _replacement: string) => {}
+
+  const handleCreate = (name: string, extension: string) => {
+    const file: EditorFile = { id: crypto.randomUUID(), name, extension, content: '', isDirty: false }
+    setFiles((prev) => [...prev, file])
+    setActiveId(file.id)
+    setShowNewFile(false)
+  }
+
+  const handleClose = (id: string) => {
+    const index = files.findIndex((f) => f.id === id)
+    const remaining = files.filter((f) => f.id !== id)
+    setFiles(remaining)
+    if (id === activeId) {
+      setActiveId(remaining[Math.min(index, remaining.length - 1)]?.id ?? null)
+    }
+  }
+
+  const handleChange = (content: string) => {
+    setFiles((prev) =>
+      prev.map((f) => (f.id === activeId ? { ...f, content, isDirty: true } : f)),
+    )
+  }
+
+  // 단축키: Ctrl+F 검색/바꾸기 창, Ctrl+S 저장
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return
+      const key = e.key.toLowerCase()
+      if (key === 'f') {
+        e.preventDefault() // 브라우저 기본 검색창 막기
+        setShowFind(true)
+      } else if (key === 's') {
+        e.preventDefault()
+        handleSave()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  })
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app">
+      <Toolbar
+        onNewFile={() => setShowNewFile(true)}
+        onOpen={handleOpen}
+        onSave={handleSave}
+        onExit={handleExit}
+      />
+      <TabBar files={files} activeId={activeId} onSelect={setActiveId} onClose={handleClose} />
 
-      <div className="ticks"></div>
+      <main className="workspace">
+        {showFind && (
+          <FindReplacePanel
+            matchCount={null}
+            onFind={handleFind}
+            onReplaceAll={handleReplaceAll}
+            onClose={() => setShowFind(false)}
+          />
+        )}
+        {activeFile ? (
+          <Editor
+            key={activeFile.id}
+            content={activeFile.content}
+            onChange={handleChange}
+            onCursorChange={(line, column) => setCursor({ line, column })}
+          />
+        ) : (
+          <div className="empty-state">
+            <p>열린 파일이 없습니다.</p>
+            <p>
+              <b>새파일</b> 또는 <b>열기</b> 버튼으로 시작하세요.
+            </p>
+          </div>
+        )}
+      </main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <StatusBar
+        language={activeFile ? languageOf(activeFile.extension) : '-'}
+        line={cursor.line}
+        column={cursor.column}
+        syntaxMessage="문법 검사: 대기 중"
+        autoSaveMessage="자동 저장: 15초"
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {showNewFile && (
+        <NewFileDialog onCreate={handleCreate} onCancel={() => setShowNewFile(false)} />
+      )}
+    </div>
   )
 }
 

@@ -44,6 +44,8 @@ class SyntaxChecker {
 function positionOf(code: string, offset: number): { line: number; column: number }
 ```
 
+`SyntaxIssue`에는 줄·열과 함께 `offset`(0부터 센 글자 위치)도 담는다. 상태바와 줄 번호 옆 빨간 점은 줄·열을, 커서 이동과 색 표시 층은 offset을 쓴다. 괄호 오류는 그 괄호의 위치, 닫히지 않은 주석·문자열은 토큰이 시작하는 위치이다.
+
 오류 문구
 
 | 경우 | 문구 |
@@ -100,7 +102,7 @@ class HistoryManager {
 
 ```ts
 class ShortcutManager {
-  register(combo: string, action: () => void): void // combo 예: "Ctrl+S", "Ctrl+Shift+Z"
+  register(combo: string, action: () => void): void // combo 예: "Ctrl+S", "Ctrl+Y"
   unregister(combo: string): void
 
   // 등록된 조합이면 preventDefault() 후 실행하고 true를 돌려준다.
@@ -113,6 +115,8 @@ function comboOf(event: KeyboardEvent): string
 ```
 
 조합 문자열은 `Ctrl` → `Shift` → `Alt` → 키 순서로 쓰고, 영문 키는 대문자로 쓴다.
+
+등록하는 단축키는 Ctrl+F(검색 창), Ctrl+S(저장), Ctrl+Z(되돌리기), Ctrl+Y(다시 실행) 네 개다. macOS에서는 같은 글자에 Cmd를 눌러도 같게 동작한다. Ctrl+Shift+Z(macOS에서는 Cmd+Shift+Z)는 다시 실행으로 쓰지 않지만, 브라우저 기본 동작만 막는 빈 동작으로 등록한다. 막지 않으면 브라우저가 textarea에서 자체 다시 실행을 해서 HistoryManager 기록과 본문이 어긋난다(설계서 3.4의 "브라우저 기본 되돌리기는 막는다").
 
 ## HighlightLayer props
 
@@ -137,8 +141,15 @@ interface HighlightLayerProps {
 | 11/28 | App의 keydown 처리를 `ShortcutManager.handle()`로 바꿈 |
 | 12/3 | Editor 입력 처리에 HistoryManager 연결(함께) |
 
-## 11/15 점검에서 정할 것
+## 설계서와 달라진 점
 
-1. `SyntaxIssue`에 `offset`도 넣을지. 지금은 설계서대로 줄·열·문구만 있다.
-2. macOS에서 Cmd+Shift+Z도 다시 실행으로 받을지(FR-23은 Ctrl+Y만 적혀 있다).
-3. 로직 클래스 폴더를 `src/logic/`으로 할지.
+| 날짜 | 내용 | 이유 |
+|---|---|---|
+| 11/22 | `SyntaxIssue`에 `offset` 추가 | 커서 이동과 색 표시 층은 offset을 쓰므로, 줄·열에서 다시 계산하지 않도록 함께 담는다 |
+
+## 결정한 것
+
+| 날짜 | 내용 |
+|---|---|
+| 11/22 | 다시 실행 단축키는 Windows 방식인 Ctrl+Y만 쓴다. macOS 방식인 Cmd+Shift+Z는 다시 실행으로 쓰지 않고 브라우저 기본 동작만 막는다. macOS에서는 FR-23대로 Cmd를 Ctrl로 보므로 Cmd+Y가 다시 실행이다 |
+| 11/22 | 로직 클래스(Tokenizer, SyntaxChecker, SearchEngine, HistoryManager, ShortcutManager)는 `src/logic/`에 둔다 |

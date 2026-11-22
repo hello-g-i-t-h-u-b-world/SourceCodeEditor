@@ -61,8 +61,10 @@ export interface BracketInfo {
   partner: number | null // 짝 괄호 위치, 짝이 없으면 null
 }
 
-// 오류 하나. line, column은 1부터 센다.
+// 오류 하나. offset은 0부터, line과 column은 1부터 센다.
+// offset은 설계서에 없던 값으로, 커서 이동과 색 표시 층에서 오류 위치를 찾을 때 쓴다.
 export interface SyntaxIssue {
+  offset: number // 본문 맨 앞부터 센 글자 위치 (textarea의 selectionStart와 같은 기준)
   line: number
   column: number
   message: string

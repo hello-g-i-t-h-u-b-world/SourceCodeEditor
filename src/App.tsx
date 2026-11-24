@@ -5,6 +5,7 @@ import NewFileDialog from './components/NewFileDialog'
 import StatusBar from './components/StatusBar'
 import TabBar from './components/TabBar'
 import Toolbar from './components/Toolbar'
+import { useSyntaxReport } from './hooks/useSyntaxReport'
 import { languageOf, type EditorFile } from './types'
 import './App.css'
 
@@ -34,6 +35,9 @@ function App() {
   const [cursor, setCursor] = useState({ line: 1, column: 1 })
 
   const activeFile = files.find((f) => f.id === activeId) ?? null
+
+  // 색 표시·문법 검사 결과. C 파일이 아니면 null
+  const report = useSyntaxReport(activeFile?.content, activeFile?.extension)
 
   // TODO: 저장 로직 구현 (저장 버튼 / Ctrl+S / 15초 자동 저장에서 공통 사용)
   const handleSave = () => {}
@@ -112,6 +116,7 @@ function App() {
           <Editor
             key={activeFile.id}
             content={activeFile.content}
+            report={report}
             onChange={handleChange}
             onCursorChange={(line, column) => setCursor({ line, column })}
           />

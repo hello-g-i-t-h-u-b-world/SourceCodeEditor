@@ -26,6 +26,9 @@ export const languageOf = (extension: string) => {
   return map[extension.toLowerCase()] ?? 'Plain Text'
 }
 
+// 문법 검사와 색 표시를 하는 파일인지. C 소스(.c)와 헤더(.h)만 검사한다(FR-24).
+export const isCFile = (extension: string) => ['c', 'h'].includes(extension.toLowerCase())
+
 // ─────────────────────────────────────────────
 // 문법 검사 · 검색 · Undo 타입 (설계서 3.3 핵심 자료구조)
 // ─────────────────────────────────────────────

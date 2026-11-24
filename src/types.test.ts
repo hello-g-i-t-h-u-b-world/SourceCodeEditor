@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fullName, languageOf, type EditorFile } from './types'
+import { fullName, isCFile, languageOf, type EditorFile } from './types'
 
 // 테스트 환경 확인용. 실제 단위 테스트(U-01~U-33)는 각 클래스 파일 옆에 둔다.
 describe('테스트 환경', () => {
@@ -20,5 +20,10 @@ describe('types.ts 보조 함수', () => {
     expect(languageOf('c')).toBe('C')
     expect(languageOf('H')).toBe('C')
     expect(languageOf('xyz')).toBe('Plain Text')
+  })
+
+  it('isCFile은 .c와 .h만 참이고 대소문자를 가리지 않는다', () => {
+    expect(['c', 'h', 'C', 'H'].map(isCFile)).toEqual([true, true, true, true])
+    expect(['cpp', 'txt', ''].map(isCFile)).toEqual([false, false, false])
   })
 })

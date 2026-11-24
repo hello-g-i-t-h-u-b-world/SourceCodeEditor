@@ -117,8 +117,29 @@
   user-select: none;
 }
 
-.code-area {
+/* 색 표시 층(뒤)과 textarea(앞)를 같은 자리에 겹친다. */
+.code-wrap {
+  position: relative;
   flex: 1;
+  min-width: 0;
+  background: var(--bg);
+}
+
+.code-wrap .highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* right·bottom은 Editor가 textarea 스크롤바 크기만큼 정한다 */
+  right: 0;
+  bottom: 0;
+}
+
+/* 글꼴, 줄 간격, 여백, tab-size, white-space는 HighlightLayer.css와 같아야 한다. */
+.code-area {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   padding: 8px;
   margin: 0;
   border: none;
@@ -128,8 +149,16 @@
   tab-size: 4;
   font: inherit;
   line-height: inherit;
-  color: var(--text);
-  background: var(--bg);
+  letter-spacing: normal;
+  color: transparent; /* 글자는 뒤의 색 표시 층이 보여 준다 */
+  caret-color: var(--text); /* 커서만 보이게 한다 */
+  background: transparent;
+}
+
+.code-area::selection {
+  color: transparent;
+  /* 선택 영역은 색 표시 층 위에 그려지므로 반투명하게 해서 뒤의 글자가 보이게 한다 */
+  background: rgba(64, 128, 200, 0.35);
 }
 
 .empty-state {

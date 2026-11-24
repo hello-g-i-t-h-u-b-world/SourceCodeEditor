@@ -1,5 +1,6 @@
-import type { Ref } from 'react'
+import { useMemo, type Ref } from 'react'
 import type { Match, SyntaxReport } from '../types'
+import { segmentsOf } from './tokenSegments'
 import './HighlightLayer.css'
 
 export interface HighlightLayerProps {
@@ -12,15 +13,28 @@ export interface HighlightLayerProps {
 }
 
 // 색 표시 층. textarea 뒤에 겹쳐 놓고, 사용자는 이 층의 글자를 보고 textarea에 입력한다.
-// 지금은 골격 단계라 본문을 그대로 그린다. 토큰 색(11/24), 괄호 색(11/26), 검색 배경(11/28)을 차례로 더한다.
-export default function HighlightLayer({ code, ref }: HighlightLayerProps) {
-  // 본문이 줄바꿈으로 끝나면 <pre>는 마지막 빈 줄에 높이를 주지 않는다.
-  // textarea와 높이를 맞추기 위해 끝에 공백 한 글자를 더한다.
-  const text = code.endsWith('\n') ? `${code} ` : code
+// 지금은 토큰 색(주석 초록, 문자열·문자 주황)까지 그린다. 괄호 색(11/26), 검색 배경(11/28)을 차례로 더한다.
+export default function HighlightLayer({ code, report, ref }: HighlightLayerProps) {
+  // 본문이 바뀔 때만 다시 나눈다.
+  const segments = useMemo(
+    () => (report ? segmentsOf(code, report.tokens) : [{ text: code, className: null }]),
+    [code, report],
+  )
 
   return (
     <pre className="highlight-layer" ref={ref} aria-hidden="true">
-      {text}
+      {segments.map((s, i) =>
+        s.className ? (
+          <span key={i} className={s.className}>
+            {s.text}
+          </span>
+        ) : (
+          s.text
+        ),
+      )}
+      {/* 본문이 줄바꿈으로 끝나면 <pre>는 마지막 빈 줄에 높이를 주지 않는다.
+          textarea와 높이를 맞추기 위해 끝에 공백 한 글자를 더한다. */}
+      {code.endsWith('\n') ? ' ' : null}
     </pre>
   )
 }

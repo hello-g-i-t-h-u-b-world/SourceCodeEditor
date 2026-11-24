@@ -16,3 +16,15 @@
   color: var(--text);
   pointer-events: none; /* 클릭과 선택은 위에 있는 textarea가 받는다 */
 }
+
+/*
+ * 토큰 색. 글자 폭이 바뀌면 textarea와 어긋나므로 색만 바꾸고
+ * 굵게, 기울임, 크기 변경은 쓰지 않는다.
+ */
+.tok-comment {
+  color: #6a9955; /* 초록 */
+}
+
+.tok-string {
+  color: #ce9178; /* 주황 */
+}

@@ -1,0 +1,18 @@
+/*
+ * 색 표시 층(<pre>)은 textarea(.code-area)와 글자 위치가 정확히 겹쳐야 한다.
+ * 그래서 글꼴, 크기, 줄 간격, 안쪽 여백, 탭 너비, 줄바꿈 방식을 textarea와 똑같이 둔다.
+ * textarea 쪽 값을 바꾸면 여기도 같이 바꾼다.
+ */
+.highlight-layer {
+  margin: 0;
+  padding: 8px;
+  border: none;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  white-space: pre;
+  tab-size: 4;
+  overflow: hidden;
+  color: var(--text);
+  pointer-events: none; /* 클릭과 선택은 위에 있는 textarea가 받는다 */
+}

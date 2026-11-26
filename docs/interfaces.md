@@ -135,12 +135,14 @@ interface HighlightLayerProps {
 }
 ```
 
+괄호 클래스(`HighlightLayer.css`): 짝이 있으면 `br-0`~`br-2`(depth % 3, 금색·자주·하늘, 굵게), 짝이 없으면 `br-error`(빨간 글자, 물결 밑줄), 커서 옆 괄호와 그 짝은 `br-active`(outline 테두리)를 더한다. 커서 앞 글자를 먼저 보고, 짝 있는 괄호가 아니면 뒤 글자를 본다. 짝은 `useSyntaxReport`의 검사기에서 `partnerOf()`로 찾는다.
+
 ## 김민서에게 필요한 것
 
 | 언제 | 무엇 |
 |---|---|
 | 11/18 | Editor가 HighlightLayer를 textarea 뒤에 겹치고, 커서 위치(offset)와 스크롤 값을 넘겨 줌 |
-| 11/25 | App이 `useMemo`로 `check()`를 부르고, `report.issues`로 상태바 문구와 줄 번호 옆 빨간 점을 그림 |
+| 11/25 | App이 `useSyntaxReport()`로 받은 `report.issues`로 상태바 문구와 줄 번호 옆 빨간 점을 그림 (11/26 기준 아직 없음: 상태바는 "문법 검사: 대기 중") |
 | 11/27 | Editor에 "start~end를 선택하고 그 줄까지 스크롤" 메서드 |
 | 11/28 | App의 keydown 처리를 `ShortcutManager.handle()`로 바꿈 |
 | 12/3 | Editor 입력 처리에 HistoryManager 연결(함께) |

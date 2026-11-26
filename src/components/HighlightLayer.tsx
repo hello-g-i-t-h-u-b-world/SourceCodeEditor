@@ -1,4 +1,5 @@
 import { useMemo, type Ref } from 'react'
+import { syntaxChecker } from '../hooks/useSyntaxReport'
 import type { Match, SyntaxReport } from '../types'
 import { segmentsOf } from './tokenSegments'
 import './HighlightLayer.css'
@@ -13,12 +14,23 @@ export interface HighlightLayerProps {
 }
 
 // 색 표시 층. textarea 뒤에 겹쳐 놓고, 사용자는 이 층의 글자를 보고 textarea에 입력한다.
-// 지금은 토큰 색(주석 초록, 문자열·문자 주황)까지 그린다. 괄호 색(11/26), 검색 배경(11/28)을 차례로 더한다.
-export default function HighlightLayer({ code, report, ref }: HighlightLayerProps) {
-  // 본문이 바뀔 때만 다시 나눈다.
+// 토큰 색(주석 초록, 문자열·문자 주황), 괄호 색과 오류 표시, 커서 옆 괄호 테두리를 그린다.
+// 검색 배경(11/28)은 다음에 더한다.
+export default function HighlightLayer({ code, report, cursor, ref }: HighlightLayerProps) {
+  const [activeAt, activePartner] = report ? activePairAt(cursor) : NO_PAIR
+
+  // 본문이 바뀌거나 테두리를 그릴 괄호가 바뀔 때만 다시 나눈다. 커서가 괄호 밖에서만 움직이면 다시 계산하지 않는다.
   const segments = useMemo(
-    () => (report ? segmentsOf(code, report.tokens) : [{ text: code, className: null }]),
-    [code, report],
+    () =>
+      report
+        ? segmentsOf(
+            code,
+            report.tokens,
+            report.brackets,
+            activeAt >= 0 ? [activeAt, activePartner] : [],
+          )
+        : [{ text: code, className: null }],
+    [code, report, activeAt, activePartner],
   )
 
   return (
@@ -37,4 +49,17 @@ export default function HighlightLayer({ code, report, ref }: HighlightLayerProp
       {code.endsWith('\n') ? ' ' : null}
     </pre>
   )
+}
+
+const NO_PAIR = [-1, -1] as const
+
+// 커서 바로 앞이나 뒤 글자가 짝이 있는 괄호이면 [그 괄호 위치, 짝 위치]. 둘 다 괄호이면 앞 글자를 먼저 본다.
+// 예: f(a)| 에서는 )와 (, |(a) 에서는 (와 ). 짝은 SyntaxChecker가 검사할 때 만든 pairs에서 바로 찾는다.
+// report는 useSyntaxReport가 같은 검사기로 만든 것이므로 partnerOf()도 같은 본문의 결과이다.
+function activePairAt(cursor: number): readonly [number, number] {
+  for (const offset of [cursor - 1, cursor]) {
+    const partner = syntaxChecker.partnerOf(offset)
+    if (partner !== null) return [offset, partner]
+  }
+  return NO_PAIR
 }

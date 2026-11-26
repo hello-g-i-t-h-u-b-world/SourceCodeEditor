@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { SyntaxChecker } from '../logic/SyntaxChecker'
 import { Tokenizer } from '../logic/Tokenizer'
 import type { Token } from '../types'
 import { segmentsOf } from './tokenSegments'
@@ -40,5 +41,71 @@ describe('segmentsOf', () => {
   it('토큰이 본문과 어긋나면 색 없이 본문 전체를 한 조각으로 돌려준다', () => {
     const stale: Token[] = [{ type: 'comment', start: 0, end: 4, unclosed: false }]
     expect(segmentsOf('// abc', stale)).toEqual([{ text: '// abc', className: null }])
+  })
+})
+
+describe('segmentsOf 괄호 (FR-15, FR-17)', () => {
+  // 검사 결과까지 넣어 조각을 만든다.
+  const checked = (code: string, active: number[] = []) => {
+    const report = new SyntaxChecker().check(code)
+    return segmentsOf(code, report.tokens, report.brackets, active)
+  }
+
+  it('짝이 있는 괄호는 깊이 % 3번째 색이고, 짝끼리 같은 색이다', () => {
+    expect(checked('{([{x}])}').map((s) => [s.text, s.className])).toEqual([
+      ['{', 'br-0'],
+      ['(', 'br-1'],
+      ['[', 'br-2'],
+      ['{', 'br-0'], // 깊이 3 → 다시 첫 색
+      ['x', null],
+      ['}', 'br-0'],
+      [']', 'br-2'],
+      [')', 'br-1'],
+      ['}', 'br-0'],
+    ])
+  })
+
+  it('짝 없는 괄호는 br-error이다', () => {
+    expect(checked('f(a]').map((s) => [s.text, s.className])).toEqual([
+      ['f', null],
+      ['(', 'br-error'],
+      ['a', null],
+      [']', 'br-error'],
+    ])
+  })
+
+  it('색이 같아도 괄호는 하나씩 따로 둔다', () => {
+    expect(checked(')(').map((s) => s.text)).toEqual([')', '('])
+    expect(checked('()()').map((s) => s.text)).toEqual(['(', ')', '(', ')'])
+  })
+
+  it('active 위치의 짝 있는 괄호에 br-active를 더한다', () => {
+    expect(checked('f(a[0])', [1, 6]).map((s) => s.className)).toEqual([
+      null,
+      'br-0 br-active',
+      null,
+      'br-1',
+      null,
+      'br-1',
+      'br-0 br-active',
+    ])
+  })
+
+  it('주석·문자열 안의 괄호는 토큰 색 그대로다', () => {
+    expect(checked('s = "(" /* ) */').map((s) => [s.text, s.className])).toEqual([
+      ['s = ', null],
+      ['"("', 'tok-string'],
+      [' ', null],
+      ['/* ) */', 'tok-comment'],
+    ])
+  })
+
+  it('괄호를 나눠도 조각을 이어 붙이면 원문과 같다', () => {
+    const code = 'int main(void) {\n\tif (a[0] > 0 { s = "}"; }\n}\n'
+    expect(
+      checked(code, [15, code.length - 2])
+        .map((s) => s.text)
+        .join(''),
+    ).toBe(code)
   })
 })

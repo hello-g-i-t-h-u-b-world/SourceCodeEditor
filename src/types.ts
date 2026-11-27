@@ -4,6 +4,7 @@ export interface EditorFile {
   extension: string // 확장자 (점 제외, 예: "c", "ts")
   content: string
   isDirty: boolean // 저장되지 않은 변경사항 여부
+  savedAt?: string | null // 마지막 저장 시각(ISO 문자열). 저장한 적이 없으면 null (설계서 3.3 EditorFile)
 }
 
 export const fullName = (file: EditorFile) => `${file.name}.${file.extension}`

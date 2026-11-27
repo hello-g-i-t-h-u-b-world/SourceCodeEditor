@@ -25,8 +25,14 @@
   border-right: 1px solid var(--border);
 }
 
-.toolbar-buttons button:hover {
+.toolbar-buttons button:hover:not(:disabled) {
   background: var(--bg-input);
+}
+
+.toolbar-buttons button:disabled {
+  color: var(--text-dim);
+  opacity: 0.5;
+  cursor: default;
 }
 
 .toolbar-title {
@@ -115,6 +121,23 @@
   text-align: right;
   color: #858585;
   user-select: none;
+}
+
+/* 오류가 있는 줄: 줄 번호 옆 빨간 점(FR-17) */
+.gutter .line-error {
+  position: relative;
+  color: #f48771;
+}
+
+.gutter .line-error::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f14c4c;
 }
 
 /* 색 표시 층(뒤)과 textarea(앞)를 같은 자리에 겹친다. */
@@ -290,6 +313,100 @@
   cursor: default;
 }
 
+.dialog-error {
+  margin: 0;
+  font-size: 13px;
+  color: #f48771;
+}
+
+.confirm-message {
+  margin: 0;
+}
+
+.confirm-dialog {
+  width: auto;
+  min-width: 320px;
+}
+
+.dialog-actions button {
+  white-space: nowrap;
+}
+
+/* ---------- 열기 대화상자 ---------- */
+.open-dialog {
+  width: 420px;
+}
+
+.open-dialog .dialog-actions {
+  justify-content: space-between;
+}
+
+.open-empty {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.open-list {
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+}
+
+.open-list li {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.open-list li:last-child {
+  border-bottom: none;
+}
+
+.open-list button {
+  padding: 6px 10px;
+  background: none;
+  border: none;
+}
+
+.open-item {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+
+.open-list button:hover {
+  background: var(--bg-input);
+}
+
+.open-list .open-delete {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.open-list .open-delete:hover {
+  color: #fff;
+  background: var(--danger);
+}
+
+.confirm-note {
+  margin: 0;
+  font-size: 13px;
+  color: #f48771;
+}
+
+.open-name {
+  font-family: var(--font-code);
+}
+
+.open-time {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
 /* ---------- 상태 표시줄 ---------- */
 .status-bar {
   display: flex;
@@ -305,4 +422,8 @@
 .status-right {
   display: flex;
   gap: 16px;
+}
+
+.status-syntax.has-error {
+  font-weight: 600;
 }

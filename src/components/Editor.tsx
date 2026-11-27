@@ -1,20 +1,34 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
 import type { SyntaxReport } from '../types'
+import { lineIndexOf, scrollTopFor } from './editorScroll'
 import HighlightLayer from './HighlightLayer'
+
+// App이 ref로 부르는 Editor 메서드. 검색(SearchEngine)이 돌려준 위치로 옮길 때 쓴다(이재성 요청 11/27).
+export interface EditorHandle {
+  // start~end를 선택하고, 그 줄이 보이지 않으면 화면 가운데로 스크롤한다. 편집 영역에 포커스를 주지 않으면
+  // 검색 창 입력이 끊기므로 focus는 고를 수 있게 한다.
+  selectRange(start: number, end: number, options?: { focus?: boolean }): void
+  focus(): void
+}
 
 interface EditorProps {
   content: string
   report: SyntaxReport | null // C 파일이 아니면 null → 색 없이 그린다
   onChange: (content: string) => void
   onCursorChange: (line: number, column: number) => void
+  ref?: Ref<EditorHandle>
 }
 
-export default function Editor({ content, report, onChange, onCursorChange }: EditorProps) {
+const TAB = '    ' // Tab 키는 공백 4칸(FR-10)
+
+export default function Editor({ content, report, onChange, onCursorChange, ref }: EditorProps) {
   const gutterRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const layerRef = useRef<HTMLPreElement>(null)
   const [caret, setCaret] = useState(0) // selectionStart. 색 표시 층이 커서 옆 괄호를 찾을 때 쓴다(11/26)
   const lineCount = content.split('\n').length
+  // 오류가 있는 줄(1부터). 줄 번호 옆에 빨간 점을 찍는다(FR-17)
+  const issueLines = useMemo(() => new Set(report?.issues.map((i) => i.line) ?? []), [report])
 
   const reportCursor = (el: HTMLTextAreaElement) => {
     const before = el.value.slice(0, el.selectionStart).split('\n')
@@ -45,6 +59,24 @@ export default function Editor({ content, report, onChange, onCursorChange }: Ed
     }
   }, [])
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      selectRange(start, end, options = {}) {
+        const el = textareaRef.current
+        if (!el) return
+        if (options.focus ?? true) el.focus({ preventScroll: true })
+        el.setSelectionRange(start, end)
+        el.scrollTop = scrollTopFor(lineIndexOf(el.value, start), el.scrollTop, el.clientHeight)
+        syncScroll()
+        reportCursor(el)
+      },
+      focus() {
+        textareaRef.current?.focus()
+      },
+    }),
+  )
+
   // 본문이 바뀌면 스크롤바가 생기거나 없어질 수 있으므로 그릴 때마다 다시 맞춘다.
   useLayoutEffect(syncScroll)
 
@@ -61,7 +93,9 @@ export default function Editor({ content, report, onChange, onCursorChange }: Ed
     <div className="editor">
       <div className="gutter" ref={gutterRef} aria-hidden="true">
         {Array.from({ length: lineCount }, (_, i) => (
-          <div key={i}>{i + 1}</div>
+          <div key={i} className={issueLines.has(i + 1) ? 'line-error' : undefined}>
+            {i + 1}
+          </div>
         ))}
       </div>
       {/* 뒤: 색을 입힌 글자(<pre>), 앞: 글자를 투명하게 한 textarea. 입력·선택·이동은 textarea가 맡는다. */}
@@ -82,6 +116,15 @@ export default function Editor({ content, report, onChange, onCursorChange }: Ed
           onChange={(e) => {
             onChange(e.target.value)
             reportCursor(e.target)
+          }}
+          onKeyDown={(e) => {
+            // Tab만 기본 동작(포커스 이동)을 막고 공백 4칸을 넣는다. 나머지 이동·편집 키는 textarea 기본 동작(설계서 3.4 3)
+            if (e.key !== 'Tab' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return
+            e.preventDefault()
+            const el = e.currentTarget
+            el.setRangeText(TAB, el.selectionStart, el.selectionEnd, 'end')
+            onChange(el.value)
+            reportCursor(el)
           }}
           onSelect={(e) => reportCursor(e.currentTarget)}
           onScroll={syncScroll}

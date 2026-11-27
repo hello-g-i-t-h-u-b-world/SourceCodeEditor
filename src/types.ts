@@ -4,6 +4,7 @@ export interface EditorFile {
   extension: string // 확장자 (점 제외, 예: "c", "ts")
   content: string
   isDirty: boolean // 저장되지 않은 변경사항 여부
+  savedAt?: string | null // 마지막 저장 시각(ISO 문자열). 저장한 적이 없으면 null (설계서 3.3 EditorFile)
 }
 
 export const fullName = (file: EditorFile) => `${file.name}.${file.extension}`
@@ -24,4 +25,71 @@ export const languageOf = (extension: string) => {
     txt: 'Plain Text',
   }
   return map[extension.toLowerCase()] ?? 'Plain Text'
+}
+
+// 문법 검사와 색 표시를 하는 파일인지. C 소스(.c)와 헤더(.h)만 검사한다(FR-24).
+export const isCFile = (extension: string) => ['c', 'h'].includes(extension.toLowerCase())
+
+// ─────────────────────────────────────────────
+// 문법 검사 · 검색 · Undo 타입 (설계서 3.3 핵심 자료구조)
+// ─────────────────────────────────────────────
+
+// 토큰 종류. Tokenizer 1단계에서는 keyword, identifier, number, preprocessor를 만들지 않고 symbol로 둔다.
+export type TokenType =
+  | 'keyword'
+  | 'identifier'
+  | 'number'
+  | 'string'
+  | 'char'
+  | 'comment'
+  | 'preprocessor'
+  | 'bracket'
+  | 'symbol'
+  | 'space'
+
+// 코드 조각 하나. end 위치의 글자는 포함하지 않는다(code.slice(start, end)).
+export interface Token {
+  type: TokenType
+  start: number
+  end: number
+  unclosed: boolean // 닫히지 않은 주석·문자열·문자이면 true
+}
+
+export type BracketChar = '(' | ')' | '{' | '}' | '[' | ']'
+
+// 괄호 하나의 검사 결과. 색은 depth % 3으로 정한다.
+export interface BracketInfo {
+  offset: number
+  char: BracketChar
+  depth: number
+  partner: number | null // 짝 괄호 위치, 짝이 없으면 null
+}
+
+// 오류 하나. offset은 0부터, line과 column은 1부터 센다.
+// offset은 설계서에 없던 값으로, 커서 이동과 색 표시 층에서 오류 위치를 찾을 때 쓴다.
+export interface SyntaxIssue {
+  offset: number // 본문 맨 앞부터 센 글자 위치 (textarea의 selectionStart와 같은 기준)
+  line: number
+  column: number
+  message: string
+}
+
+// 검사 결과 묶음. 색 표시 층과 상태 표시줄은 이 결과만 보고 화면을 그린다.
+export interface SyntaxReport {
+  tokens: Token[]
+  brackets: BracketInfo[]
+  issues: SyntaxIssue[] // 위치 순으로 정렬
+}
+
+// 검색 결과 하나. end 위치의 글자는 포함하지 않는다.
+export interface Match {
+  start: number
+  end: number
+}
+
+// Undo/Redo에 저장하는 편집 상태
+export interface Snapshot {
+  content: string
+  selectionStart: number
+  selectionEnd: number
 }

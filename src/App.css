@@ -25,8 +25,14 @@
   border-right: 1px solid var(--border);
 }
 
-.toolbar-buttons button:hover {
+.toolbar-buttons button:hover:not(:disabled) {
   background: var(--bg-input);
+}
+
+.toolbar-buttons button:disabled {
+  color: var(--text-dim);
+  opacity: 0.5;
+  cursor: default;
 }
 
 .toolbar-title {
@@ -117,8 +123,46 @@
   user-select: none;
 }
 
-.code-area {
+/* 오류가 있는 줄: 줄 번호 옆 빨간 점(FR-17) */
+.gutter .line-error {
+  position: relative;
+  color: #f48771;
+}
+
+.gutter .line-error::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f14c4c;
+}
+
+/* 색 표시 층(뒤)과 textarea(앞)를 같은 자리에 겹친다. */
+.code-wrap {
+  position: relative;
   flex: 1;
+  min-width: 0;
+  background: var(--bg);
+}
+
+.code-wrap .highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* right·bottom은 Editor가 textarea 스크롤바 크기만큼 정한다 */
+  right: 0;
+  bottom: 0;
+}
+
+/* 글꼴, 줄 간격, 여백, tab-size, white-space는 HighlightLayer.css와 같아야 한다. */
+.code-area {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   padding: 8px;
   margin: 0;
   border: none;
@@ -128,8 +172,16 @@
   tab-size: 4;
   font: inherit;
   line-height: inherit;
-  color: var(--text);
-  background: var(--bg);
+  letter-spacing: normal;
+  color: transparent; /* 글자는 뒤의 색 표시 층이 보여 준다 */
+  caret-color: var(--text); /* 커서만 보이게 한다 */
+  background: transparent;
+}
+
+.code-area::selection {
+  color: transparent;
+  /* 선택 영역은 색 표시 층 위에 그려지므로 반투명하게 해서 뒤의 글자가 보이게 한다 */
+  background: rgba(64, 128, 200, 0.35);
 }
 
 .empty-state {
@@ -261,6 +313,100 @@
   cursor: default;
 }
 
+.dialog-error {
+  margin: 0;
+  font-size: 13px;
+  color: #f48771;
+}
+
+.confirm-message {
+  margin: 0;
+}
+
+.confirm-dialog {
+  width: auto;
+  min-width: 320px;
+}
+
+.dialog-actions button {
+  white-space: nowrap;
+}
+
+/* ---------- 열기 대화상자 ---------- */
+.open-dialog {
+  width: 420px;
+}
+
+.open-dialog .dialog-actions {
+  justify-content: space-between;
+}
+
+.open-empty {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.open-list {
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+}
+
+.open-list li {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.open-list li:last-child {
+  border-bottom: none;
+}
+
+.open-list button {
+  padding: 6px 10px;
+  background: none;
+  border: none;
+}
+
+.open-item {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+
+.open-list button:hover {
+  background: var(--bg-input);
+}
+
+.open-list .open-delete {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.open-list .open-delete:hover {
+  color: #fff;
+  background: var(--danger);
+}
+
+.confirm-note {
+  margin: 0;
+  font-size: 13px;
+  color: #f48771;
+}
+
+.open-name {
+  font-family: var(--font-code);
+}
+
+.open-time {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
 /* ---------- 상태 표시줄 ---------- */
 .status-bar {
   display: flex;
@@ -276,4 +422,8 @@
 .status-right {
   display: flex;
   gap: 16px;
+}
+
+.status-syntax.has-error {
+  font-weight: 600;
 }

@@ -10,10 +10,10 @@
 | `src/components/HighlightLayer.tsx` | 색 표시 층 | 11/17 |
 | `src/logic/Tokenizer.ts` | 토큰화 | 11/19 |
 | `src/logic/SyntaxChecker.ts` | 괄호 짝 맞추기, 오류 | 11/23 |
-| `src/logic/SearchEngine.ts` | 검색, 다음·이전, 모두 바꾸기 | 11/26 |
-| `src/components/FindReplacePanel.tsx` | 지금 있는 초안에 기능 추가 | 11/27 |
-| `src/logic/ShortcutManager.ts` | 단축키 | 11/28 |
-| `src/logic/HistoryManager.ts` | Undo/Redo | 12/2 |
+| `src/logic/SearchEngine.ts` | 검색, 다음·이전, 모두 바꾸기 | 11/27 |
+| `src/components/FindReplacePanel.tsx` | 지금 있는 초안에 기능 추가 | 11/28 |
+| `src/logic/ShortcutManager.ts` | 단축키 | 11/29 |
+| `src/logic/HistoryManager.ts` | Undo/Redo | 12/1 |
 
 단위 테스트는 같은 폴더에 `Tokenizer.test.ts`처럼 둔다.
 
@@ -79,6 +79,10 @@ class SearchEngine {
 }
 ```
 
+- 현재 위치: `cursor` 위치에서 시작하는 결과도 포함한다. 커서가 단어 맨 앞에 있으면 그 단어가 현재 위치다.
+- `replaceAll()`: 마지막 `search()` 뒤에 본문이 바뀌었으면 같은 검색어·단어 단위로 다시 찾은 뒤 바꾼다. 바꾼 뒤에는 위치가 모두 달라지므로 결과를 비운다(`matches`는 빈 배열, `currentIndex`는 -1). 검색 창은 바뀐 본문으로 다시 `search()`한다.
+- `isWordChar(c)`, `isWholeWord(text, i, query)`도 내보낸다. 단어 글자는 영문자·숫자·`_`이고 한글은 아니다.
+
 선택 영역을 옮기고 그 줄까지 스크롤하는 일은 Editor(김민서)가 한다.
 
 ## HistoryManager
@@ -100,7 +104,7 @@ class HistoryManager {
 }
 ```
 
-입력 묶기(0.5초), 붙여넣기·잘라내기·모두 바꾸기 직전 기록, 한글 조합 중 건너뛰기는 Editor에 연결할 때(12/3~12/4) 함께 처리한다.
+입력 묶기(0.5초), 붙여넣기·잘라내기·모두 바꾸기 직전 기록, 한글 조합 중 건너뛰기는 Editor에 연결할 때(12/2~12/3) 함께 처리한다.
 
 ## ShortcutManager
 
@@ -143,9 +147,10 @@ interface HighlightLayerProps {
 |---|---|
 | 11/18 | Editor가 HighlightLayer를 textarea 뒤에 겹치고, 커서 위치(offset)와 스크롤 값을 넘겨 줌 |
 | 11/25 | App이 `useSyntaxReport()`로 받은 `report.issues`로 상태바 문구와 줄 번호 옆 빨간 점을 그림 (11/26 기준 아직 없음: 상태바는 "문법 검사: 대기 중") |
-| 11/27 | Editor에 "start~end를 선택하고 그 줄까지 스크롤" 메서드 |
-| 11/28 | App의 keydown 처리를 `ShortcutManager.handle()`로 바꿈 |
-| 12/3 | Editor 입력 처리에 HistoryManager 연결(함께) |
+| 11/28 | Editor에 "start~end를 선택하고 그 줄까지 스크롤" 메서드 |
+| 11/30 | App의 keydown 처리를 `ShortcutManager.handle()`로 바꿈 |
+| 12/2 | Editor 입력 처리에 HistoryManager 연결(함께) |
+| 12/3 | 파일 삭제·예외 처리 PR (12/4 조립에서 합치기 위해) |
 
 ## 설계서와 달라진 점
 
